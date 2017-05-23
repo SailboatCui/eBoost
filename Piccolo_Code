@@ -1,0 +1,347 @@
+
+#include "DSP28x_Project.h"
+// Function Declaration
+void Gpio_setup1(void);  // Initialization Function
+void InitEPwmTimer(void);
+void ADCSetup(void);
+void DACSetup(void);
+void Actuator(void);         // Functional Function
+void StartUp(void);
+void Controller(void);
+int OverVoltage(void);
+
+// constant declaration
+const uint16_t offtime=90;
+const uint16_t delaytime=6;
+
+const long int kp=780;
+const long int ki=178;
+
+const long int Vref1=2146;  //18  //2361*10/11=
+const long int Vref2=2206;  //18.5  //2427*10/11=
+
+const long int max_act=952320;//930<->(8.3A)
+const long int min_act=0;
+
+const long int max_control=952320;//930<->(8.3A)
+const long int min_control=0;
+
+const long int offset=94356;
+const long int offset_shift=96620544;
+
+// variable declaration
+long int Vref;
+
+long int VoltagePeak;
+long int VoltageVally;
+
+long int ipk;
+long int ipkp;
+
+long int e;
+long int ep;
+
+void main(void)
+{
+// InitSysCtrl includes a call to a RAM based function and without a call to
+// memcpy first
+   #ifdef _FLASH
+    memcpy(&RamfuncsRunStart, &RamfuncsLoadStart, (size_t)&RamfuncsLoadSize);
+   #endif
+
+// Step 1. Initialize System Control:
+// Set Sysclk=60MHz
+// Also set PLL, WatchDog, enable Peripheral Clocks
+// This  function is borrowed from the TI's library: f2802x_SysCtrl.c file.
+   InitSysCtrl();
+
+// Disable CPU interrupts
+   DINT;
+
+// Initialize PIE control registers to their default state.
+// The default state is all PIE interrupts disabled and flags
+// are cleared.
+//   This  function is borrowed from the TI's library: f2802x_PieCtrl.c file.
+  InitPieCtrl();
+
+// Disable CPU interrupts and clear all CPU interrupt flags:
+   IER = 0x0000;
+   IFR = 0x0000;
+
+// Initialize the PIE vector table with pointers to the shell Interrupt
+// Service Routines (ISR). This will populate the entire table, even if the interrupt
+// is not used
+// This function is borrowed from TI's f2802x_PieVect.c file
+   InitPieVectTable();
+
+   // ADC initialization function, initializing the ADC clock, sampling window
+  InitAdc();
+  // ADC self calibration function
+  AdcOffsetSelfCal();
+
+  ADCSetup();
+
+  DACSetup();
+
+  InitEPwmTimer();
+
+  Gpio_setup1();
+
+  StartUp();
+
+ while(EPwm3Regs.TBCTR <= 10000)  // delay for 40ms
+   {
+                 while(GpioDataRegs.GPADAT.bit.GPIO2==0);
+
+                 GpioDataRegs.GPADAT.bit.GPIO3 = 0;                // pwm_off;
+
+                  EPwm1Regs.TBCTR = 0;                                     // off-time counter 5us
+                  while (EPwm1Regs.TBCTR <= offtime);
+                  AdcRegs.ADCINTFLGCLR.bit.ADCINT2=1;                          // CLEAR ADCINT2 flag
+                  AdcRegs.ADCSOCFRC1.bit.SOC1=1;                                //Software Trigger ADC_ontime once
+                  while(AdcRegs.ADCINTFLG.bit.ADCINT2==0);                      // GetValue
+                  VoltagePeak = AdcResult.ADCRESULT1;
+                  if(OverVoltage()==1)                                          //OVP
+                                break;
+                  Controller();
+                  Actuator();
+
+                  // pwm_on;
+                  GpioDataRegs.GPADAT.bit.GPIO3 = 1;
+                  // delay for current comp to avoid switching on current peak 1us
+                  EPwm1Regs.TBCTR = 0;
+                  while (EPwm1Regs.TBCTR <= delaytime);
+   }
+ // voltage referrence update
+Vref=Vref2;
+// step up command
+GpioDataRegs.GPADAT.bit.GPIO4=1;
+// logic is the same as the Vref1 case
+   while(1)
+   {
+              while(GpioDataRegs.GPADAT.bit.GPIO2==0);
+
+              GpioDataRegs.GPADAT.bit.GPIO3 = 0;                       // pwm_off;
+
+              EPwm1Regs.TBCTR = 0;                // off-time counter for 5us
+               while (EPwm1Regs.TBCTR <= offtime);
+
+               AdcRegs.ADCINTFLGCLR.bit.ADCINT2=1;        // CLEAR ADCINT2 flag
+               AdcRegs.ADCSOCFRC1.bit.SOC1=1 //Software Trigger ADC_ontime once
+               while(AdcRegs.ADCINTFLG.bit.ADCINT2==0);
+               VoltagePeak = AdcResult.ADCRESULT1;
+               if(OverVoltage()==1)                                          //OVP
+                             break;
+               Controller();
+               Actuator();
+
+               // pwm_on;
+               GpioDataRegs.GPADAT.bit.GPIO3 = 1;
+               // delay for current comp to avoid switching on current peak, for 1us
+               EPwm1Regs.TBCTR = 0;
+               while (EPwm1Regs.TBCTR <= delaytime);
+   }
+// Do not act until the OverVoltge Happen
+while(1)  { GpioDataRegs.GPADAT.bit.GPIO3 = 0;  }
+}
+
+void Gpio_setup1(void)
+{
+
+   EALLOW;
+
+   // Enable GPIO3 as pwm output, set it low
+   GpioCtrlRegs.GPAPUD.bit.GPIO3 = 0;   // Enable pullup on GPIO3
+   GpioDataRegs.GPASET.bit.GPIO3 = 0;// Load output latch
+   GpioCtrlRegs.GPAMUX1.bit.GPIO3 = 0;  // GPIO3 = GPIO3
+   GpioCtrlRegs.GPADIR.bit.GPIO3 = 1;   // GPIO3 = output
+   GpioDataRegs.GPADAT.bit.GPIO3=0;   // initialize GPIO3 output to 0
+
+   // Enable GPIO1 as comparator1 output
+   GpioCtrlRegs.GPAPUD.bit.GPIO1 = 0;   // Enable pullup on GPIO1
+   GpioCtrlRegs.GPAMUX1.bit.GPIO1 = 3;  // GPIO1 = comparator output
+
+   //Enable current comparator input on GPIO2
+   GpioCtrlRegs.GPAPUD.bit.GPIO2 = 0;   // Enable pullup on GPIO2
+   GpioCtrlRegs.GPAMUX1.bit.GPIO2 = 0;         // GPIO2=GPIO2
+   GpioCtrlRegs.GPADIR.bit.GPIO2 = 0;          // input
+
+   // Naturally synchronized to Sysclkout
+   //GpioCtrlRegs.GPAQSEL1.bit.GPIO2 = 0;        // XINT1 Synch to SYSCLKOUT only
+
+   // Comparator1 input is naturally connected to ADCINA2
+   // ADC input is naturally connected to ADCINA1
+
+   // Enable GPIO 4 as a step up command pin, set it low
+    GpioCtrlRegs.GPAPUD.bit.GPIO4 = 0;   // Enable pullup on GPIO4
+    GpioDataRegs.GPASET.bit.GPIO4 = 0;// Load output latch
+    GpioCtrlRegs.GPAMUX1.bit.GPIO4= 0;  // GPIO4 = GPIO4
+    GpioCtrlRegs.GPADIR.bit.GPIO4 = 1;   // GPIO4 = output
+    GpioDataRegs.GPADAT.bit.GPIO4=0;   // initialize GPIO4 output to 0
+
+   EDIS;
+}
+
+
+void InitEPwmTimer()
+{
+
+// PWM1A set, used for the main timer
+EPwm1Regs.TBPRD = 5190;         // Set Period
+//EPwm1Regs.CMPA.half.CMPA = 100; // Set Compare A
+//EPwm1Regs.CMPB = 100;           // Set Compare B
+EPwm1Regs.TBPHS.half.TBPHS= 0;  // Set Phase register to zero
+EPwm1Regs.TBCTR = 0; // set TB counter be 0
+EPwm1Regs.TBCTL.bit.CTRMODE = TB_COUNT_UP;
+EPwm1Regs.TBCTL.bit.PHSEN = TB_DISABLE; // Phase loading disabled
+EPwm1Regs.TBCTL.bit.PRDLD = TB_SHADOW;
+EPwm1Regs.TBCTL.bit.SYNCOSEL = TB_SYNC_DISABLE;
+EPwm1Regs.TBCTL.bit.HSPCLKDIV = TB_DIV1; // set TBCLK = SYSCLK
+EPwm1Regs.TBCTL.bit.CLKDIV = TB_DIV1;
+EPwm1Regs.CMPCTL.bit.SHDWAMODE = CC_SHADOW;
+EPwm1Regs.CMPCTL.bit.SHDWBMODE = CC_SHADOW;
+EPwm1Regs.CMPCTL.bit.LOADAMODE = CC_CTR_ZERO; // load on CTR = Zero
+EPwm1Regs.CMPCTL.bit.LOADBMODE = CC_CTR_ZERO; // load on CTR = Zero
+EPwm1Regs.AQCTLA.bit.ZRO = AQ_SET;
+EPwm1Regs.AQCTLA.bit.CAU = AQ_CLEAR;
+EPwm1Regs.AQCTLB.bit.ZRO = AQ_SET;
+EPwm1Regs.AQCTLB.bit.CBU = AQ_CLEAR;
+
+// PWM3A set, used for step up timer
+EPwm3Regs.TBPRD = 65535;        // Set Period
+//EPwm3Regs.CMPA.half.CMPA = 100; // Set Compare A
+//EPwm3Regs.CMPB = 100;           // Set Compare B
+EPwm3Regs.TBPHS.half.TBPHS= 0;  // Set Phase register to zero
+EPwm3Regs.TBCTR = 0; // set TB counter be 0
+EPwm3Regs.TBCTL.bit.CTRMODE = TB_COUNT_UP;
+EPwm3Regs.TBCTL.bit.PHSEN = TB_DISABLE; // Phase loading disabled
+EPwm3Regs.TBCTL.bit.PRDLD = TB_SHADOW;
+EPwm3Regs.TBCTL.bit.SYNCOSEL = TB_SYNC_DISABLE;
+EPwm3Regs.TBCTL.bit.HSPCLKDIV = 3 ; // DIV 8 // set clk=60kHz
+EPwm3Regs.TBCTL.bit.CLKDIV = 7; // DIV 128
+EPwm3Regs.CMPCTL.bit.SHDWAMODE = CC_SHADOW;
+EPwm3Regs.CMPCTL.bit.SHDWBMODE = CC_SHADOW;
+EPwm3Regs.CMPCTL.bit.LOADAMODE = CC_CTR_ZERO; // load on CTR = Zero
+EPwm3Regs.CMPCTL.bit.LOADBMODE = CC_CTR_ZERO; // load on CTR = Zero
+EPwm3Regs.AQCTLA.bit.ZRO = AQ_SET;
+EPwm3Regs.AQCTLA.bit.CAU = AQ_CLEAR;
+EPwm3Regs.AQCTLB.bit.ZRO = AQ_SET;
+EPwm3Regs.AQCTLB.bit.CBU = AQ_CLEAR;
+
+
+}
+
+
+void ADCSetup()
+{
+    EALLOW;
+
+    AdcRegs.ADCCTL1.bit.INTPULSEPOS = 1;    //ADCINT2 trips after AdcResults latch
+   AdcRegs.INTSEL1N2.bit.INT2E      = 1;     //Enabled ADCINT2
+   AdcRegs.INTSEL1N2.bit.INT2CONT   = 0;     //Disable ADCINT2 Continuous mode
+   AdcRegs.INTSEL1N2.bit.INT2SEL    = 1;    //setup EOC1 to trigger ADCINT2 to fire
+   AdcRegs.ADCSOC1CTL.bit.CHSEL     = 6;    //set SOC1 channel select to ADCINA6
+   AdcRegs.ADCSOC1CTL.bit.TRIGSEL   = 0;    //set SOC1 is triggered by SOFTWARE
+   AdcRegs.ADCSOC1CTL.bit.ACQPS     = 6;    //set SOC1 S/H Window to 7 ADC Clock Cycles, (6 ACQPS plus 1)
+   AdcRegs.ADCINTFLGCLR.bit.ADCINT2=1;
+    EDIS;
+}
+
+void DACSetup()
+{
+    EALLOW;
+    Comp1Regs.COMPCTL.bit.COMPDACEN = 1; //The comparator is powered up
+    Comp1Regs.COMPCTL.bit.SYNCSEL = 0; //Asynchronous version
+    Comp1Regs.COMPCTL.bit.CMPINV = 0; //pass
+    Comp1Regs.COMPCTL.bit.COMPSOURCE = 0; //The inverting input is internal DAC
+    Comp1Regs.DACCTL.bit.DACSOURCE = 0; //The DATA source is from DACVAL
+    Comp1Regs.DACVAL.bit.DACVAL = 0; // (3.3/1023*xxx)V
+    EDIS;
+}
+
+void IntiVar()
+{
+Vref=Vref1;
+
+VoltagePeak=0;
+VoltageVally=0;
+
+e=Vref;
+ep=Vref;
+
+ipk=0;
+ipkp=0;
+
+counter=0;
+delay_counter=0;
+}
+
+void Actuator()
+{
+    // actuator saturation setting
+    long int action;
+    if(ipk<min_act)
+        action=min_act;
+    else if (ipk>max_act)
+        action=max_act;
+    else
+        action=ipk;
+    // actuate
+    Comp1Regs.DACVAL.bit.DACVAL = action>>10; // (3.3/1023*xxx)V
+}
+
+void Controller()
+{
+    e=Vref-VoltagePeak;
+    ipk=ipkp+ki*e+kp*(e-ep);
+    // controller saturation setting
+               if (ipk>=max_control)
+                 {ipk=max_control;}
+               else if  (ipk<=min_control)
+                 {ipk=min_control;}
+               else {}
+     ep=e;
+     ipkp=ipk;
+}
+
+void StartUp()
+{
+    // 5ms delay for analog adc circuit to set up
+    long int      i;
+    for (i = 0; i < 300000; i++) {}
+    // Initialize all variables
+    IntiVar();
+    // turn on switch ( GPIO 3)
+    GpioDataRegs.GPADAT.bit.GPIO3 = 1;
+    // step up command 0
+    GpioDataRegs.GPADAT.bit.GPIO4 = 0;
+    GpioDataRegs.GPADAT.bit.GPIO5 = 0;
+}
+
+int OverVoltage()
+{
+    int ovflag;
+    if(VoltagePeak>=3500)
+        ovflag=1;
+    else
+        ovflag=0;
+        return ovflag;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
