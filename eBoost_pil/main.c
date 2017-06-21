@@ -1,5 +1,6 @@
 
 #include "DSP28x_Project.h"     // Device Headerfile and Examples Include File
+#include "main.h"
 
 // linker addresses, needed to copy code from flash to ram
 extern Uint16 RamfuncsRunStart, RamfuncsLoadStart, RamfuncsLoadSize;
@@ -58,6 +59,48 @@ long int ipkp;
 long int e;
 long int ep;
 
+void SCIInit (uint32_t baudrate, uint32_t clk ){
+	EALLOW;
+
+	SysCtrlRegs.PCLKCR0.bit.SCIAENCLK=1;
+
+    SciaRegs.SCICTL1.all = 0;
+    SciaRegs.SCICCR.all = 0x07;
+    SciaRegs.SCICTL1.all = 0x0013;
+
+    int16_t brr = (Uint16)(clk /8l /baudrate) - 1;
+    SciaRegs.SCIHBAUD = 0xFF & (brr>>8);
+    SciaRegs.SCILBAUD = 0xFF & brr;
+
+    // setup FIFO
+    SciaRegs.SCIFFTX.all = 0xC000;
+    SciaRegs.SCIFFRX.all = 0x0000;
+    SciaRegs.SCIFFCT.all = 0x00;
+
+    SciaRegs.SCICTL1.all = 0x0033;
+    SciaRegs.SCIFFTX.bit.TXFIFOXRESET = 1;
+    SciaRegs.SCIFFRX.bit.RXFIFORESET = 1;
+
+	// enable pins
+	GpioCtrlRegs.GPAPUD.bit.GPIO28 = 0;
+	GpioCtrlRegs.GPAPUD.bit.GPIO29 = 0;
+	GpioCtrlRegs.GPAQSEL2.bit.GPIO28 = 3;
+	GpioCtrlRegs.GPAMUX2.bit.GPIO28 = 1;
+	GpioCtrlRegs.GPAMUX2.bit.GPIO29 = 1;
+
+	EDIS;
+}
+
+void SCIWriteString(const char *s){
+	while((*s) != 0){
+	    while(SciaRegs.SCICTL2.bit.TXRDY == 0){
+			continue;
+	    }
+	    SciaRegs.SCITXBUF = *s;
+		s++;
+	}
+}
+
 void main(void)
 {
 	// WARNING: Always ensure you call memcpy before running any functions from RAM
@@ -97,6 +140,10 @@ void main(void)
 	// The shell ISR routines are found in f2802x_DefaultIsr.c.
 	// This function is found in f2802x_PieVect.c.
 	InitPieVectTable();
+
+	// configure serial line
+	SCIInit(BAUD_RATE, LSPCLK_HZ);
+	SCIWriteString("\n\rRS-232 Initialized.\n\r");
 
 	EALLOW;  // This is needed to write to EALLOW protected registers
 	PieVectTable.XINT1=&currentcomp_isr;
