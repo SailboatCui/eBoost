@@ -59,6 +59,9 @@ long int ipkp;
 long int e;
 long int ep;
 
+#define LED_TOGGLE_PERIOD (100000L/2) // interrupt at 100 kHz
+uint32_t LedTimer = 0;
+
 void SCIInit (uint32_t baudrate, uint32_t clk ){
 	EALLOW;
 
@@ -241,6 +244,11 @@ void Gpio_setup1(void)
 	GpioCtrlRegs.GPADIR.bit.GPIO4 = 1;   // GPIO3 = output
 	GpioDataRegs.GPADAT.bit.GPIO4=0;   // initialize GPIO4 output to 0
 
+	// LED for blinking
+	GpioCtrlRegs.GPAMUX1.bit.GPIO0 = 0;
+	GpioCtrlRegs.GPADIR.bit.GPIO0 = 1;
+	GpioDataRegs.GPACLEAR.bit.GPIO0 = 1;
+
 	EDIS;
 }
 
@@ -302,11 +310,12 @@ void InitEPwmTimer()
 	EPwm3Regs.AQCTLB.bit.ZRO = AQ_SET;
 	EPwm3Regs.AQCTLB.bit.CBU = AQ_CLEAR;
 
-	// PWM1 Event Trigger Interrupt
-	EPwm1Regs.ETSEL.bit.INTSEL = ET_CTRU_CMPA;     // Select INT on A event
-	EPwm1Regs.ETSEL.bit.INTEN = 0;                 // Disable INT
-	EPwm1Regs.ETPS.bit.INTPRD = ET_1ST;           // Generate INT on every event
-
+	// configure
+	EALLOW;
+	EPwm1Regs.ETSEL.bit.SOCAEN	= 1; // Enable SOC on A group
+	EPwm1Regs.ETSEL.bit.SOCASEL	= 2; // Select SOC trigger on ePWM period, change later to ET_CTRU_CMPA
+	EPwm1Regs.ETPS.bit.SOCAPRD 	= 1; // Generate pulse on 1st event
+	EDIS;
 }
 
 
@@ -314,14 +323,16 @@ void ADCSetup()
 {
 	EALLOW;
 	AdcRegs.ADCCTL1.bit.INTPULSEPOS  = 1;    //ADCINT1 trips after AdcResults latch
-	AdcRegs.INTSEL1N2.bit.INT1E     = 0;     //Disabled ADCINT1
+	AdcRegs.INTSEL1N2.bit.INT1E     = 1;
 	AdcRegs.INTSEL1N2.bit.INT1CONT  = 0;     //Disable ADCINT1 Continuous mode
-	AdcRegs.INTSEL1N2.bit.INT1SEL    = 0;    //setup EOC0 to trigger ADCINT1 to fire
+	AdcRegs.INTSEL1N2.bit.INT1SEL   = 0;    //setup EOC0 to trigger ADCINT1 to fire
+
+	AdcRegs.ADCSAMPLEMODE.all = 0; // no simultaneous sampling
+	AdcRegs.SOCPRICTL.bit.SOCPRIORITY = 0; // round-robin - now high priority channels
+
 	AdcRegs.ADCSOC0CTL.bit.CHSEL     = 6;    //set SOC0 channel select to ADCINA6
-	AdcRegs.ADCSOC0CTL.bit.TRIGSEL   = 0;    //set SOC0 is triggered by SOFTWARE
+	AdcRegs.ADCSOC0CTL.bit.TRIGSEL   = 5;    //set SOC0 is triggered by EPWM1A
 	AdcRegs.ADCSOC0CTL.bit.ACQPS     = 6;    //set SOC0 S/H Window to 7 ADC Clock  Cycles, (6 ACQPS plus 1)
-	AdcRegs.ADCINTFLGCLR.bit.ADCINT1=1;
-	PieCtrlRegs.PIEIFR1.bit.INTx1 = 0;
 	EDIS;
 }
 
@@ -448,27 +459,26 @@ __interrupt void currentcomp_isr(void)  // (GPIO_2,XINT_1)
 
 __interrupt void epwm1_timer_isr(void)
 {
-	EALLOW;
-	EPwm1Regs.ETSEL.bit.INTEN = 0;             // Disable off_timer interrupt
-	AdcRegs.INTSEL1N2.bit.INT1E     = 1;       //Enabled ADCINT1
-	AdcRegs.ADCSOCFRC1.bit.SOC0=1;             //Software Trigger ADC_ontime once
-	//                       while(AdcRegs.ADCINTFLG.bit.ADCINT1==0);
-	PieCtrlRegs.PIEACK.all = PIEACK_GROUP3;
-	// Acknowledge interrupt to receive more interrupts from group 1\EALLOW;
-	EDIS;
+	asm(" ESTOP0"); // this interrupt sould never be triggered
+	EPwm1Regs.ETCLR.bit.INT = 1;  // Clear INT flag for this timer
+	PieCtrlRegs.PIEACK.all = PIEACK_GROUP3; // Acknowledge interrupt to PIE
+	IER |= M_INT3;
 }
 
 __interrupt void adc_vp_isr(void)
 {
-	EALLOW;
-	AdcRegs.ADCINTFLGCLR.bit.ADCINT1=1;
-	AdcRegs.INTSEL1N2.bit.INT1E     = 0;
+	AdcRegs.ADCINTFLGCLR.bit.ADCINT1 = 1;	// Clear ADCINT1 flag reinitialize for next SOC
+	PieCtrlRegs.PIEACK.all = PIEACK_GROUP1; // Acknowledge interrupt to PIE
+	IER |= M_INT1;
+
 	VoltagePeak = AdcResult.ADCRESULT0;
 	Controller();
 	Actuator();
 	GpioDataRegs.GPADAT.bit.GPIO3 = 1;    // pwm_on;
-	//PieCtrlRegs.PIEIFR1.bit.INTx4 = 0;   // current_comp_interrupt flag set 0
-	XIntruptRegs.XINT1CR.bit.ENABLE = 1;   // enable_current_comp_interrupt
-	PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;
-	EDIS;
+
+	LedTimer++;
+	if(LedTimer > LED_TOGGLE_PERIOD){
+		LedTimer = 0;
+		GpioDataRegs.GPATOGGLE.bit.GPIO0 = 1;
+	}
 }
