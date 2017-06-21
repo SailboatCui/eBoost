@@ -18,24 +18,10 @@
 		</buildCommand>
 	</buildSpec>
 	<natures>
-		<nature>org.eclipse.cdt.core.cnature</nature>
-		<nature>org.eclipse.cdt.core.ccnature</nature>
-		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>com.ti.ccstudio.core.ccsNature</nature>
+		<nature>org.eclipse.cdt.core.cnature</nature>
+		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
+		<nature>org.eclipse.cdt.core.ccnature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 	</natures>
-	<variableList>
-		<variable>
-			<name>INSTALLROOT_2802X_TO_IQMATH</name>
-			<value>$%7BPARENT-5-ORIGINAL_PROJECT_ROOT%7D/libs/math/IQmath</value>
-		</variable>
-		<variable>
-			<name>INSTALLROOT_F2802X_V230</name>
-			<value>$%7BPARENT-2-ORIGINAL_PROJECT_ROOT%7D</value>
-		</variable>
-		<variable>
-			<name>ORIGINAL_PROJECT_ROOT</name>
-			<value>file:/D:/control_suite/controlSUITE/device_support/f2802x/v230/f2802x_examples_structs/gpio_setup</value>
-		</variable>
-	</variableList>
 </projectDescription>
