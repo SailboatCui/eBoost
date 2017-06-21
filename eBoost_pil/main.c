@@ -53,11 +53,10 @@ long int Vref;
 long int VoltagePeak;
 long int VoltageVally;
 
-long int ipk;
-long int ipkp;
-
 long int e;
 long int ep;
+
+PilVars_t PilVars;
 
 #define LED_TOGGLE_PERIOD (100000L/2) // interrupt at 100 kHz
 uint32_t LedTimer = 0;
@@ -458,8 +457,8 @@ void IntiVar()
 	e=Vref;
 	ep=Vref;
 
-	ipk=10240;
-	ipkp=10240;
+	PilVars.ipk=10240;
+	PilVars.ipkp=10240;
 
 }
 
@@ -467,28 +466,29 @@ void Actuator()
 {
 	// actuator saturation setting
 	long int action;
-	if(ipk<min_act)
+	if(PilVars.ipk<min_act)
 		action=min_act;
-	else if (ipk>max_act)
+	else if (PilVars.ipk>max_act)
 		action=max_act;
 	else
-		action=ipk;
+		action=PilVars.ipk;
 	// actuate
-	Comp1Regs.DACVAL.bit.DACVAL = action>>10; // (3.3/1023*xxx)V
+	PilVars.DACVAL = (uint16_t)(action>>10);
+	Comp1Regs.DACVAL.bit.DACVAL = PilVars.DACVAL; // (3.3/1023*xxx)V
 }
 
 void Controller()
 {
 	e=Vref-VoltagePeak;
-	ipk=ipkp+ki*e+kp*(e-ep);
+	PilVars.ipk=PilVars.ipkp+ki*e+kp*(e-ep);
 	// controller saturation setting
-	if (ipk>=max_control)
-	{ipk=max_control;}
-	else if  (ipk<=min_control)
-	{ipk=min_control;}
+	if (PilVars.ipk>=max_control)
+	{PilVars.ipk=max_control;}
+	else if  (PilVars.ipk<=min_control)
+	{PilVars.ipk=min_control;}
 	else {}
 	ep=e;
-	ipkp=ipk;
+	PilVars.ipkp=PilVars.ipk;
 }
 
 
@@ -560,7 +560,8 @@ __interrupt void adc_vp_isr(void)
 
 	PIL_beginInterruptCall();
 
-	VoltagePeak = AdcResult.ADCRESULT0;
+	SET_OPROBE(PilVars.VoltagePeak_ADC, AdcResult.ADCRESULT0);
+	VoltagePeak = PilVars.VoltagePeak_ADC;
 	Controller();
 	Actuator();
 	GpioDataRegs.GPADAT.bit.GPIO3 = 1;    // pwm_on;

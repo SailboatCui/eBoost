@@ -8,4 +8,13 @@
 
 #define BAUD_RATE 115200L
 
+typedef struct PIL_VARS {
+	PIL_READ_PROBE(int32_t, ipkp, 0, 1, "");
+	PIL_READ_PROBE(int32_t, ipk, 0, 1, "");
+	PIL_READ_PROBE(int32_t, DACVAL, 0, 1, "");
+	PIL_OVERRIDE_PROBE(int16_t, VoltagePeak_ADC, 0, 1, "");
+} PilVars_t;
+
+extern PilVars_t PilVars;
+
 #endif /* MAIN_H_ */
