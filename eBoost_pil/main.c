@@ -1,6 +1,9 @@
 
 #include "DSP28x_Project.h"     // Device Headerfile and Examples Include File
 
+// linker addresses, needed to copy code from flash to ram
+extern Uint16 RamfuncsRunStart, RamfuncsLoadStart, RamfuncsLoadSize;
+
 // Select the example to compile in.  Only one example should be set as 1
 // the rest should be set as 0.
 
@@ -60,9 +63,8 @@ void main(void)
 	// WARNING: Always ensure you call memcpy before running any functions from RAM
 	// InitSysCtrl includes a call to a RAM based function and without a call to
 	// memcpy first, the processor will go "into the weeds"
-#ifdef _FLASH
 	memcpy(&RamfuncsRunStart, &RamfuncsLoadStart, (size_t)&RamfuncsLoadSize);
-#endif
+	InitFlash();
 
 	// Step 1. Initialize System Control:
 	// PLL, WatchDog, enable Peripheral Clocks
