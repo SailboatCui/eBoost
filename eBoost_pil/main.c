@@ -104,6 +104,84 @@ void SCIWriteString(const char *s){
 	}
 }
 
+void SCIPoll()
+{
+	//in case the SCI hangs
+	if((SciaRegs.SCIRXST.all & 0x0080) != 0)
+	{
+		// break condition occurred
+		EALLOW;
+		SciaRegs.SCICTL1.all = 0;       // reset
+		SciaRegs.SCICTL1.all = 0x0013;  // enable tx, rx
+		SciaRegs.SCICTL1.all = 0x0033;  // relinquish from reset
+	    EDIS;
+	}
+
+	while(SciaRegs.SCIFFRX.bit.RXFFST != 0)
+	{
+		// assuming that there will be a "break" when FIFO is empty
+		PIL_RA_serialIn((int16)SciaRegs.SCIRXBUF.all);
+	}
+
+	if(SciaRegs.SCICTL2.bit.TXRDY == 1){
+		int16_t ch;
+		if(PIL_RA_serialOut(&ch))
+		{
+			SciaRegs.SCITXBUF = ch;
+		}
+	}
+}
+
+void PilCallback(PIL_CtrlCallbackReq_t aCallbackReq)
+{
+	switch(aCallbackReq)
+	{
+		case  PIL_CLBK_ENTER_NORMAL_OPERATION_REQ:
+			// enabling the hardware actuation (if desired by user)
+			PIL_inhibitPilSimulation();
+			//EnableActuation();
+			return;
+
+		case PIL_CLBK_LEAVE_NORMAL_OPERATION_REQ:
+			// stopping the hardware actuation or invoking a transfer to a safe system state
+			//DisableActuation();
+			PIL_allowPilSimulation();
+			return;
+
+		case PIL_CLBK_INITIALIZE_SIMULATION:
+			// resetting the controller variables
+			//ResetControl();
+			return;
+
+		case PIL_CLBK_TERMINATE_SIMULATION:
+		     //Termination Request
+			 PilInitCalibrations();
+		     break;
+
+		case PIL_CLBK_STOP_TIMERS:
+			// stopping relevant timers
+			EALLOW;
+			SysCtrlRegs.PCLKCR1.bit.EPWM1ENCLK = 0;
+			SysCtrlRegs.PCLKCR1.bit.EPWM2ENCLK = 0;
+			SysCtrlRegs.PCLKCR1.bit.EPWM3ENCLK = 0;
+			EDIS;
+			return;
+
+		case PIL_CLBK_START_TIMERS:
+			// starting relevant timers
+			EALLOW;
+			SysCtrlRegs.PCLKCR1.bit.EPWM1ENCLK = 1;
+			SysCtrlRegs.PCLKCR1.bit.EPWM2ENCLK = 1;
+			SysCtrlRegs.PCLKCR1.bit.EPWM3ENCLK = 1;
+			EDIS;
+			return;
+
+		case PIL_CLBK_PREINIT_SIMULATION:
+			//PIL pre-initialization
+			return;
+   }
+}
+
 void main(void)
 {
 	// WARNING: Always ensure you call memcpy before running any functions from RAM
@@ -147,6 +225,14 @@ void main(void)
 	// configure serial line
 	SCIInit(BAUD_RATE, LSPCLK_HZ);
 	SCIWriteString("\n\rRS-232 Initialized.\n\r");
+
+	// initialize PIL framework
+	PIL_init();
+	PIL_setLinkParams(PIL_GUID_PTR, (PIL_CommCallbackPtr_t)SCIPoll);
+	PIL_setCtrlCallback((PIL_CtrlCallbackPtr_t)PilCallback);
+
+	PilInitOverrideProbes();
+	PilInitCalibrations();
 
 	EALLOW;  // This is needed to write to EALLOW protected registers
 	PieVectTable.XINT1=&currentcomp_isr;
@@ -198,6 +284,7 @@ void main(void)
 		Vref=3000;
 		GpioDataRegs.GPADAT.bit.GPIO4=0;
 		GpioDataRegs.GPADAT.bit.GPIO4=1;
+		PIL_backgroundCall();
 	}
 
 
@@ -470,6 +557,8 @@ __interrupt void adc_vp_isr(void)
 	AdcRegs.ADCINTFLGCLR.bit.ADCINT1 = 1;	// Clear ADCINT1 flag reinitialize for next SOC
 	PieCtrlRegs.PIEACK.all = PIEACK_GROUP1; // Acknowledge interrupt to PIE
 	IER |= M_INT1;
+
+	PIL_beginInterruptCall();
 
 	VoltagePeak = AdcResult.ADCRESULT0;
 	Controller();

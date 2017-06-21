@@ -13,7 +13,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="out" artifactName="FOC_28027" buildProperties="" description="" id="com.ti.ccstudio.buildDefinitions.C2000.Debug.1736625329" name="Debug" parent="com.ti.ccstudio.buildDefinitions.C2000.Debug" postbuildStep="..\buildsteps.bat 1 &quot;${C2000_CG_ROOT}&quot; &quot;${BuildArtifactFileBaseName}&quot; \&quot;28027,23,21_JTAG\&quot;;" prebuildStep="..\buildsteps.bat 0 &quot;${C2000_CG_ROOT}&quot; &quot;${BuildArtifactFileBaseName}&quot; &quot;${COMPILER_FLAGS}&quot; PLECS_PIL_SEPARATOR $(C_SRCS)">
+				<configuration artifactExtension="out" artifactName="eBoost_28027" buildProperties="" description="" id="com.ti.ccstudio.buildDefinitions.C2000.Debug.1736625329" name="Debug" parent="com.ti.ccstudio.buildDefinitions.C2000.Debug" postbuildStep="..\buildsteps.bat 1 &quot;${C2000_CG_ROOT}&quot; &quot;${BuildArtifactFileBaseName}&quot; \&quot;28027,23,21_JTAG\&quot;;" prebuildStep="..\buildsteps.bat 0 &quot;${C2000_CG_ROOT}&quot; &quot;${BuildArtifactFileBaseName}&quot; &quot;${COMPILER_FLAGS}&quot; PLECS_PIL_SEPARATOR $(C_SRCS)">
 					<folderInfo id="com.ti.ccstudio.buildDefinitions.C2000.Debug.1736625329.1620557666" name="/" resourcePath="">
 						<toolChain id="com.ti.ccstudio.buildDefinitions.C2000_15.12.exe.DebugToolchain.39222138" name="TI Build Tools" superClass="com.ti.ccstudio.buildDefinitions.C2000_15.12.exe.DebugToolchain" targetTool="com.ti.ccstudio.buildDefinitions.C2000_15.12.exe.linkerDebug.557786761">
 							<option id="com.ti.ccstudio.buildDefinitions.core.OPT_TAGS.467502673" superClass="com.ti.ccstudio.buildDefinitions.core.OPT_TAGS" valueType="stringList">
@@ -39,8 +39,6 @@
 								<option id="com.ti.ccstudio.buildDefinitions.C2000_15.12.compilerID.OPT_LEVEL.1041968906" name="Optimization level (--opt_level, -O)" superClass="com.ti.ccstudio.buildDefinitions.C2000_15.12.compilerID.OPT_LEVEL" value="com.ti.ccstudio.buildDefinitions.C2000_15.12.compilerID.OPT_LEVEL.0" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.C2000_15.12.compilerID.INCLUDE_PATH.2019406262" name="Add dir to #include search path (--include_path, -I)" superClass="com.ti.ccstudio.buildDefinitions.C2000_15.12.compilerID.INCLUDE_PATH" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/framework}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/plxcontrol}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${CG_TOOL_ROOT}/include&quot;"/>
 								</option>
@@ -49,7 +47,7 @@
 								<option id="com.ti.ccstudio.buildDefinitions.C2000_15.12.compilerID.DIAG_WARNING.87718352" name="Treat diagnostic &lt;id&gt; as warning (--diag_warning, -pdsw)" superClass="com.ti.ccstudio.buildDefinitions.C2000_15.12.compilerID.DIAG_WARNING" valueType="stringList">
 									<listOptionValue builtIn="false" value="225"/>
 								</option>
-								<option id="com.ti.ccstudio.buildDefinitions.C2000_15.12.compilerID.UNDEFINE.1742174525" name="Undefine NAME (--undefine, -U)" superClass="com.ti.ccstudio.buildDefinitions.C2000_15.12.compilerID.UNDEFINE" valueType="stringList"/>
+								<option id="com.ti.ccstudio.buildDefinitions.C2000_15.12.compilerID.UNDEFINE.1742174525" name="Undefine NAME (--undefine, -U)" superClass="com.ti.ccstudio.buildDefinitions.C2000_15.12.compilerID.UNDEFINE"/>
 								<option id="com.ti.ccstudio.buildDefinitions.C2000_15.12.compilerID.DEFINE.1894185084" name="Pre-define NAME (--define, -D)" superClass="com.ti.ccstudio.buildDefinitions.C2000_15.12.compilerID.DEFINE" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_INLINE"/>
 									<listOptionValue builtIn="false" value="_PLEXIM_"/>
@@ -60,7 +58,7 @@
 								<inputType id="com.ti.ccstudio.buildDefinitions.C2000_15.12.compiler.inputType__ASM2_SRCS.1503416719" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.C2000_15.12.compiler.inputType__ASM2_SRCS"/>
 							</tool>
 							<tool id="com.ti.ccstudio.buildDefinitions.C2000_15.12.exe.linkerDebug.557786761" name="C2000 Linker" superClass="com.ti.ccstudio.buildDefinitions.C2000_15.12.exe.linkerDebug">
-								<option id="com.ti.ccstudio.buildDefinitions.C2000_15.12.linkerID.OUTPUT_FILE.500166595" name="Specify output file name (--output_file, -o)" superClass="com.ti.ccstudio.buildDefinitions.C2000_15.12.linkerID.OUTPUT_FILE" value="&quot;FOC_28027.out&quot;" valueType="string"/>
+								<option id="com.ti.ccstudio.buildDefinitions.C2000_15.12.linkerID.OUTPUT_FILE.500166595" name="Specify output file name (--output_file, -o)" superClass="com.ti.ccstudio.buildDefinitions.C2000_15.12.linkerID.OUTPUT_FILE" value="&quot;eBoost_28027.out&quot;" valueType="string"/>
 								<option id="com.ti.ccstudio.buildDefinitions.C2000_15.12.linkerID.MAP_FILE.515352241" name="Link information (map) listed into &lt;file&gt; (--map_file, -m)" superClass="com.ti.ccstudio.buildDefinitions.C2000_15.12.linkerID.MAP_FILE" value="&quot;${ProjName}.map&quot;" valueType="string"/>
 								<option id="com.ti.ccstudio.buildDefinitions.C2000_15.12.linkerID.STACK_SIZE.1126251276" name="Set C system stack size (--stack_size, -stack)" superClass="com.ti.ccstudio.buildDefinitions.C2000_15.12.linkerID.STACK_SIZE" value="0x300" valueType="string"/>
 								<option id="com.ti.ccstudio.buildDefinitions.C2000_15.12.linkerID.generatedLinkerCommandFiles.1995585194" name="[Legacy] Generated Linker Command files" superClass="com.ti.ccstudio.buildDefinitions.C2000_15.12.linkerID.generatedLinkerCommandFiles" valueType="stringList">
