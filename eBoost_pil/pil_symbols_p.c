@@ -25,7 +25,7 @@
 #endif
 // manual configurations
 
-PIL_CONFIG_DEF(uint32_t, SysClk, 60000000L);
-PIL_CONFIG_DEF(uint32_t, PwmFrequency, 100000L);
-PIL_CONFIG_DEF(uint32_t, ControlFrequency, 100000L);
+PIL_CONFIG_DEF(uint32_t, SysClk, SYSCLK_HZ);
+PIL_CONFIG_DEF(uint32_t, PwmFrequency, PWM_HZ);
+PIL_CONFIG_DEF(uint32_t, ControlFrequency, PWM_HZ);
 PIL_CONFIG_DEF(uint16_t, ProcessorPartNumber, 28027);

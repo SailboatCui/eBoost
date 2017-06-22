@@ -5,6 +5,7 @@
 
 #define SYSCLK_HZ 60000000L
 #define LSPCLK_HZ 15000000L
+#define PWM_HZ 100000L
 
 #define BAUD_RATE 115200L
 
