@@ -1,0 +1,358 @@
+Plecs {
+  Name          "eBoost"
+  Version       "4.0"
+  CircuitModel  "ContStateSpace"
+  StartTime     "0.0"
+  StopTime      "1e-3"
+  Solver        "dopri"
+  MaxStep       "1e-3"
+  InitStep      "-1"
+  FixedStep     "1e-3"
+  Refine        "1"
+  ZCStepSize    "1e-9"
+  RelTol        "1e-3"
+  AbsTol        "-1"
+  TurnOnThreshold "0"
+  SyncFixedStepTasks "2"
+  UseSingleCommonBaseRate "2"
+  LossVariableLimitExceededMsg "3"
+  NegativeSwitchLossMsg "3"
+  DivisionByZeroMsg "3"
+  StiffnessDetectionMsg "2"
+  MaxConsecutiveZCs "1000"
+  AssertionAction "1"
+  InitializationCommands "% PIL settings (defined in \"pil_symbols_p.c\")\nini"
+"tConstants = plecs('get','./PIL','InitConstants');\n\nProcessor = initConstan"
+"ts.ProcessorPartNumber;\nSYSCLK = initConstants.SysClk;\nFs = initConstants.C"
+"ontrolFrequency;\nFpwm = initConstants.PwmFrequency;\n"
+  InitialState  "1"
+  SystemState   ""
+  CodeGenParameterInlining "2"
+  CodeGenInliningExceptions "AAAACwAAAAAA"
+  CodeGenFloatingPointFormat "2"
+  CodeGenIntegerWordSize "32"
+  CodeGenAbsTimeUsageMsg "3"
+  CodeGenBaseName ""
+  CodeGenOutputDir ""
+  CodeGenExtraOpts ""
+  CodeGenTarget "Generic"
+  CodeGenTargetSettings ""
+  ExtendedMatrixPrecision "1"
+  MatrixSignificanceCheck "2"
+  ExternalModeSettings ""
+  Schematic {
+    Location      [552, 312; 936, 588]
+    ZoomFactor    1
+    SliderPosition [0, 0]
+    ShowBrowser   off
+    BrowserWidth  100
+    Component {
+      Type          PIL
+      Name          "PIL"
+      Show          on
+      Position      [200, 95]
+      Direction     right
+      Flipped       off
+      Parameter {
+        Variable      "TargetName"
+        Value         "'eBoost'"
+        Show          off
+      }
+      Parameter {
+        Variable      "SampleTime"
+        Value         "1/Fs"
+        Show          on
+      }
+      Parameter {
+        Variable      "ExternalTrigger"
+        Value         "1"
+        Show          off
+      }
+      Parameter {
+        Variable      "OutputDelay"
+        Value         "0"
+        Show          off
+      }
+      Parameter {
+        Variable      "InputSymbols"
+        Value         "AAAACQAAAAABAAAACQAAAAABAAAAfwAAAAARUGlsREk6OlBpbFN5bWJ"
+"vbAAAAAAuAFAAaQBsAFYAYQByAHMALgBWAG8AbAB0AGEAZwBlAFAAZQBhAGsAXwBBAEQAQwAAAAIA"
+"MA=="
+        Show          off
+      }
+      Parameter {
+        Variable      "OutputSymbols"
+        Value         "AAAACQAAAAABAAAACwAAAAABAAAAHABQAGkAbABWAGEAcgBzAC4ARAB"
+"BAEMAVgBBAEw="
+        Show          off
+      }
+      Parameter {
+        Variable      "CalibrationSymbols"
+        Value         "AAAACQAAAAAA"
+        Show          off
+      }
+    }
+    Component {
+      Type          Constant
+      Name          "ADC"
+      Show          on
+      Position      [115, 95]
+      Direction     right
+      Flipped       off
+      Frame         [-10, -10; 10, 10]
+      LabelPosition [0, 13]
+      LabelAlign    up
+      Parameter {
+        Variable      "Value"
+        Value         "1024"
+        Show          on
+      }
+    }
+    Component {
+      Type          Scope
+      Name          "DAC"
+      Show          on
+      Position      [280, 95]
+      Direction     up
+      Flipped       off
+      Location      [1205, 343; 1893, 806]
+      State         "AAAA/wAAAAD9AAAAAgAAAAEAAAAAAAAAAPwCAAAAA/sAAAAQAFoAbwBvA"
+"G0AQQByAGUAYQAAAAAA/////wAAAD8A////+wAAABQAUwBhAHYAZQBkAFYAaQBlAHcAcwAAAAAA//"
+"///wAAAH4A////+wAAAAwAVAByAGEAYwBlAHMAAAAAAP////8AAAB+AP///wAAAAMAAANcAAAAgPw"
+"BAAAAAfsAAAAUAEQAYQB0AGEAVwBpAGQAZwBlAHQBAAAAAAAAA1wAAABbAP///wAAA1wAAAGfAAAA"
+"BAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAOAFQAbwBvAGwAQgBhAHIBAAAAAP////8AAAAAA"
+"AAAAA=="
+      SavedViews    "AAAAAgAAAAA="
+      HeaderState   "AAAA/wAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAL+AMAAAAHAAAAB"
+"gAAAH0AAAAHAAAAfQAAAAQAAAB9AAAABQAAAH0AAAAIAAAAfQAAAAkAAAB9AAAAAwAAAH0AAANcAA"
+"AACwEAAAEAAAAAAAAAAAAAAAB9/////wAAAIEAAAAAAAAACwAAALQAAAABAAAAAAAAAH0AAAABAAA"
+"AAAAAAH0AAAABAAAAAAAAAAAAAAABAAAAAAAAAAAAAAABAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAB"
+"AAAAAAAAAAAAAAABAAAAAAAAAAAAAAABAAAAAAAAAAAAAAABAAAAAAAAAa4AAAABAAAAAAAAA+gA"
+      PlotPalettes  "AAAAAQAAAAEAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      Axes          "1"
+      TimeRange     "0.0"
+      ScrollingMode "1"
+      SingleTimeAxis "1"
+      Open          "0"
+      Ts            "-1"
+      SampleLimit   "0"
+      XAxisLabel    ""
+      Axis {
+        Name          ""
+        AutoScale     1
+        MinValue      0
+        MaxValue      1
+        Signals       {}
+        SignalTypes   [ 0 ]
+        Untangle      0
+        KeepBaseline  off
+        BaselineValue 0
+      }
+      Fourier {
+        SingleXAxis   on
+        AxisLabel     "Frequency"
+        Scaling       0
+        PhaseDisplay  0
+        Axis {
+          Name          ""
+          AutoScale     1
+          MinValue      0
+          MaxValue      1
+          Signals       {}
+          Untangle      0
+          KeepBaseline  off
+          BaselineValue 0
+        }
+      }
+    }
+    Component {
+      Type          PlecsProbe
+      Name          "Probe"
+      Show          on
+      Position      [195, 195]
+      Direction     right
+      Flipped       off
+    }
+    Component {
+      Type          Display
+      Name          "Display"
+      Show          off
+      Position      [260, 20]
+      Direction     up
+      Flipped       off
+      Frame         [-31, -11; 31, 11]
+      LabelPosition [0, 14]
+      LabelAlign    up
+      Parameter {
+        Variable      "Notation"
+        Value         "1"
+        Show          off
+      }
+      Parameter {
+        Variable      "Precision"
+        Value         "0"
+        Show          off
+      }
+    }
+    Component {
+      Type          Constant
+      Name          "Processor"
+      Show          on
+      Position      [110, 20]
+      Direction     right
+      Flipped       off
+      Frame         [-10, -10; 10, 10]
+      LabelPosition [0, 13]
+      LabelAlign    up
+      Parameter {
+        Variable      "Value"
+        Value         "Processor"
+        Show          off
+      }
+    }
+    Component {
+      Type          SignalDemux
+      Name          "Demux"
+      Show          off
+      Position      [245, 195]
+      Direction     right
+      Flipped       on
+      Parameter {
+        Variable      "Width"
+        Value         "2"
+        Show          off
+      }
+    }
+    Component {
+      Type          Scope
+      Name          "Ipk"
+      Show          on
+      Position      [280, 195]
+      Direction     up
+      Flipped       off
+      Location      [0, 23; 2048, 1092]
+      State         "AAAA/wAAAAD9AAAAAgAAAAEAAAAAAAAAAPwCAAAAA/sAAAAQAFoAbwBvA"
+"G0AQQByAGUAYQAAAAAA/////wAAAG4A////+wAAABQAUwBhAHYAZQBkAFYAaQBlAHcAcwAAAAAA//"
+"///wAAAH4A////+wAAAAwAVAByAGEAYwBlAHMAAAAAAP////8AAAB+AP///wAAAAMAAAAAAAAAAPw"
+"BAAAAAfsAAAAUAEQAYQB0AGEAVwBpAGQAZwBlAHQAAAAAAP////8AAABbAP///wAACgAAAAUZAAAA"
+"BAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAOAFQAbwBvAGwAQgBhAHIBAAAAAP////8AAAAAA"
+"AAAAA=="
+      SavedViews    "AAAAAgAAAAA="
+      HeaderState   "AAAA/wAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAL/gMAAAAJAAAAA"
+"QAAAH0AAAAGAAAAfQAAAAcAAAB9AAAABAAAAH0AAAAFAAAAfQAAAAgAAAB9AAAACQAAAH0AAAACAA"
+"AAfQAAAAMAAAB9AAABCQAAAAsBAAABAAAAAAAAAAAAAAAAff////8AAACBAAAAAAAAAAsAAACMAAA"
+"AAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAA"
+"AAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAA"
+"AB9AAAAAQAAAAAAAAPoAA=="
+      PlotPalettes  "AAAAAQAAAAEAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAA"
+"AEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+      Axes          "2"
+      TimeRange     "0.0"
+      ScrollingMode "1"
+      SingleTimeAxis "1"
+      Open          "0"
+      Ts            "-1"
+      SampleLimit   "0"
+      XAxisLabel    ""
+      Axis {
+        Name          ""
+        AutoScale     1
+        MinValue      0
+        MaxValue      1
+        Signals       {}
+        SignalTypes   [ ]
+        Untangle      0
+        KeepBaseline  off
+        BaselineValue 0
+      }
+      Axis {
+        Name          ""
+        AutoScale     1
+        MinValue      0
+        MaxValue      1
+        Signals       {}
+        SignalTypes   [ ]
+        Untangle      0
+        KeepBaseline  off
+        BaselineValue 0
+      }
+      Fourier {
+        SingleXAxis   on
+        AxisLabel     "Frequency"
+        Scaling       0
+        PhaseDisplay  0
+        Axis {
+          Name          ""
+          AutoScale     1
+          MinValue      0
+          MaxValue      1
+          Signals       {}
+          Untangle      0
+          KeepBaseline  off
+          BaselineValue 0
+        }
+        Axis {
+          Name          ""
+          AutoScale     1
+          MinValue      0
+          MaxValue      1
+          Signals       {}
+          Untangle      0
+          KeepBaseline  off
+          BaselineValue 0
+        }
+      }
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "ADC"
+      SrcTerminal   1
+      DstComponent  "PIL"
+      DstTerminal   1
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "PIL"
+      SrcTerminal   2
+      DstComponent  "DAC"
+      DstTerminal   1
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "Processor"
+      SrcTerminal   1
+      DstComponent  "Display"
+      DstTerminal   1
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "Probe"
+      SrcTerminal   1
+      DstComponent  "Demux"
+      DstTerminal   1
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "Demux"
+      SrcTerminal   2
+      DstComponent  "Ipk"
+      DstTerminal   1
+    }
+    Connection {
+      Type          Signal
+      SrcComponent  "Demux"
+      SrcTerminal   3
+      DstComponent  "Ipk"
+      DstTerminal   2
+    }
+  }
+  ProbeBlock {
+    Tag           "eBoost/Probe"
+    Probe {
+      Component     "PIL"
+      Path          ""
+      Signals       {"PilVars.ipk", "PilVars.ipkp"}
+    }
+  }
+}
+DemoSignature "rc4Y81wYsTGwVY4rH6+8KD0tDNUQ2GmiojMqnt/9CUQ="
